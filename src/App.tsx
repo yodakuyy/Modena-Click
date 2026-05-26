@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { storage } from './utils/storage';
-import type { UserGuide, GuideStep } from './utils/storage';
+import type { UserGuide, GuideStep, UserProfile } from './utils/storage';
 import { Dashboard } from './components/Dashboard';
 import { SandboxRecorder } from './components/SandboxRecorder';
 import { StepEditor } from './components/StepEditor';
 import { GuideViewer } from './components/GuideViewer';
 import { ExportModal } from './components/ExportModal';
+import { CategoryMaster } from './components/CategoryMaster';
+import { UserMaster } from './components/UserMaster';
+import { BookOpen, FolderKanban, MousePointerClick, LogOut, Users } from 'lucide-react';
 import { supabase } from './utils/supabase';
 
 function App() {
@@ -16,6 +19,9 @@ function App() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [viewerOrigin, setViewerOrigin] = useState<'dashboard' | 'editor'>('dashboard');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [activeTab, setActiveTab] = useState<'guides' | 'categories' | 'users'>('guides');
 
   // User Role & Portal state
   const [userRole, setUserRole] = useState<'admin' | 'user' | null>(null);
@@ -71,7 +77,7 @@ function App() {
       });
     } catch (err: any) {
       console.error('Login error:', err);
-      setLoginError(err.message || 'Gagal login via Supabase. Pastikan kredensial lo benar.');
+      setLoginError(err.message || 'Gagal masuk log melalui Supabase. Pastikan kredensial Anda benar.');
     }
   };
 
@@ -82,15 +88,19 @@ function App() {
     setCurrentScreen('dashboard');
   };
 
-  // Initialize and load guides from local storage and sync with Supabase cloud!
+  // Initialize and load guides, categories, and users from storage and sync with Supabase cloud!
   useEffect(() => {
     // 1. Load instant cache
     setGuides(storage.getGuides());
+    setCategories(storage.getCategories());
+    setUsers(storage.getUsers());
 
     // 2. Sync asynchronously from Supabase cloud database
     const syncCloudData = async () => {
       const cloudGuides = await storage.fetchGuidesFromCloud();
       setGuides(cloudGuides);
+      const cloudUsers = await storage.fetchUsersFromCloud();
+      setUsers(cloudUsers);
     };
     syncCloudData();
   }, []);
@@ -164,7 +174,7 @@ function App() {
     storage.saveGuide(newGuide);
     setGuides(storage.getGuides());
     setActiveGuideId(newGuide.id);
-    setCurrentScreen('editor');
+    setCurrentScreen(userRole === 'admin' ? 'editor' : 'dashboard');
 
     const Toast = Swal.mixin({
       toast: true,
@@ -251,6 +261,74 @@ function App() {
     });
   };
 
+  const handleAddCategory = (categoryName: string) => {
+    storage.addCategory(categoryName);
+    setCategories(storage.getCategories());
+  };
+
+  const handleEditCategory = (oldName: string, newName: string) => {
+    storage.editCategory(oldName, newName);
+    setCategories(storage.getCategories());
+
+    // Also update any guides using this category
+    const updatedGuides = guides.map(g => {
+      if (g.category === oldName) {
+        const newG = { ...g, category: newName };
+        storage.saveGuide(newG);
+        return newG;
+      }
+      return g;
+    });
+    setGuides(updatedGuides);
+  };
+
+  const handleDeleteCategory = (categoryName: string) => {
+    storage.deleteCategory(categoryName);
+    setCategories(storage.getCategories());
+
+    // Fallback guides using this category to "IT Operations"
+    const updatedGuides = guides.map(g => {
+      if (g.category === categoryName) {
+        const newG = { ...g, category: 'IT Operations' };
+        storage.saveGuide(newG);
+        return newG;
+      }
+      return g;
+    });
+    setGuides(updatedGuides);
+  };
+
+  const handleAddUser = (fullName: string, email: string, role: 'admin' | 'user') => {
+    const newUser: UserProfile = {
+      id: crypto.randomUUID(),
+      email,
+      fullName,
+      role,
+      createdAt: new Date().toISOString()
+    };
+    storage.saveUser(newUser);
+    setUsers(storage.getUsers());
+  };
+
+  const handleEditUser = (id: string, fullName: string, email: string, role: 'admin' | 'user') => {
+    const userToUpdate = users.find(u => u.id === id);
+    if (userToUpdate) {
+      const updatedUser: UserProfile = {
+        ...userToUpdate,
+        fullName,
+        email,
+        role
+      };
+      storage.saveUser(updatedUser);
+      setUsers(storage.getUsers());
+    }
+  };
+
+  const handleDeleteUser = (id: string) => {
+    storage.deleteUser(id);
+    setUsers(storage.getUsers());
+  };
+
   const activeGuide = activeGuideId ? guides.find(g => g.id === activeGuideId) : null;
 
   // Render Premium Modena Login Page if not authenticated
@@ -329,17 +407,128 @@ function App() {
 
       {/* RENDER SCREENS */}
       {currentScreen === 'dashboard' && (
-        <Dashboard
-          guides={guides}
-          onCreateNew={handleCreateNew}
-          onEditGuide={handleEditGuide}
-          onPlayGuide={handlePlayGuide}
-          onDeleteGuide={handleDeleteGuide}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          userRole={userRole}
-          onLogout={handleLogout}
-        />
+        <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300">
+          {/* Left Sidebar */}
+          <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-5 transition-colors">
+            <div className="space-y-6">
+              {/* Brand Logo */}
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-tr from-indigo-600 to-purple-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20 text-white flex-shrink-0">
+                  <MousePointerClick className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent leading-none mb-1">
+                    By M-Click
+                  </h1>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                    userRole === 'admin'
+                      ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-150 dark:border-indigo-900/30'
+                      : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-150 dark:border-emerald-900/30'
+                  }`}>
+                    {userRole === 'admin' ? '🛡️ Admin' : '👥 Team'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Menu Navigation */}
+              <nav className="space-y-1.5 pt-4">
+                <button
+                  onClick={() => setActiveTab('guides')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    activeTab === 'guides'
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 font-bold'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Daftar Panduan</span>
+                </button>
+
+                {userRole === 'admin' && (
+                  <button
+                    onClick={() => setActiveTab('categories')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      activeTab === 'categories'
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 font-bold'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <FolderKanban className="w-4 h-4" />
+                    <span>Master Kategori</span>
+                  </button>
+                )}
+
+                {userRole === 'admin' && (
+                  <button
+                    onClick={() => setActiveTab('users')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      activeTab === 'users'
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 font-bold'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Master User</span>
+                  </button>
+                )}
+              </nav>
+            </div>
+
+            {/* Sidebar Footer */}
+            <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              {/* Theme Toggle */}
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-850 transition text-xs font-semibold cursor-pointer"
+              >
+                <span>{darkMode ? '☀️ Mode Terang' : '🌙 Mode Gelap'}</span>
+              </button>
+
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-450 font-bold px-4 py-2.5 rounded-xl text-xs border border-rose-200/50 dark:border-rose-900/30 transition cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Keluar Portal</span>
+              </button>
+            </div>
+          </aside>
+
+          {/* Right Main Content Panel */}
+          <main className="flex-1 flex flex-col overflow-y-auto">
+            {activeTab === 'guides' && (
+              <Dashboard
+                guides={guides}
+                onCreateNew={handleCreateNew}
+                onEditGuide={handleEditGuide}
+                onPlayGuide={handlePlayGuide}
+                onDeleteGuide={handleDeleteGuide}
+                userRole={userRole}
+                categories={categories}
+              />
+            )}
+            {activeTab === 'categories' && (
+              <CategoryMaster
+                categories={categories}
+                guides={guides}
+                onAddCategory={handleAddCategory}
+                onEditCategory={handleEditCategory}
+                onDeleteCategory={handleDeleteCategory}
+                darkMode={darkMode}
+              />
+            )}
+            {activeTab === 'users' && (
+              <UserMaster
+                users={users}
+                onAddUser={handleAddUser}
+                onEditUser={handleEditUser}
+                onDeleteUser={handleDeleteUser}
+                darkMode={darkMode}
+              />
+            )}
+          </main>
+        </div>
       )}
 
       {currentScreen === 'sandbox' && (
@@ -358,6 +547,7 @@ function App() {
           onExport={handleExportGuide}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
+          categories={categories}
         />
       )}
 

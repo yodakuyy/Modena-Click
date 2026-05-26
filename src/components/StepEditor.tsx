@@ -24,6 +24,7 @@ interface StepEditorProps {
   onExport: (updatedGuide: UserGuide) => void;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
+  categories: string[];
 }
 
 export const StepEditor: React.FC<StepEditorProps> = ({
@@ -33,7 +34,8 @@ export const StepEditor: React.FC<StepEditorProps> = ({
   onPlay,
   onExport,
   darkMode,
-  setDarkMode
+  setDarkMode,
+  categories
 }) => {
   const [editedGuide, setEditedGuide] = useState<UserGuide>({ ...guide });
   const [selectedStepId, setSelectedStepId] = useState<string>(
@@ -293,10 +295,9 @@ export const StepEditor: React.FC<StepEditorProps> = ({
                   onChange={(e) => updateGuideMetadata('category', e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
-                  <option value="Customer Service">Customer Service</option>
-                  <option value="IT Operations">IT Operations</option>
-                  <option value="QA Testing">QA Testing</option>
-                  <option value="Billing & Finance">Billing & Finance</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
               </div>
               <div>

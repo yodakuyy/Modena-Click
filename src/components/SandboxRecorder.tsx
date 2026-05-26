@@ -381,7 +381,7 @@ export const SandboxRecorder: React.FC<SandboxRecorderProps> = ({ onSave, onCanc
               Pilih Mode Perekaman Guide
             </h1>
             <p className="text-sm text-slate-400 max-w-lg mx-auto">
-              Apakah lo mau merekam di Sandbox interaktif bawaan kita, atau mau mendokumentasikan aplikasi kantor lo sendiri lewat rekaman video?
+              Silakan pilih metode perekaman: merekam interaksi langsung di dalam Sandbox Simulasi, atau mendokumentasikan alur kerja aplikasi eksternal melalui rekaman video.
             </p>
           </div>
 
@@ -415,7 +415,7 @@ export const SandboxRecorder: React.FC<SandboxRecorderProps> = ({ onSave, onCanc
                 <div>
                   <h3 className="text-lg font-bold text-white mb-1 group-hover:text-indigo-400 transition">ZetaCRM Simulator</h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Mulai merekam otomatis di aplikasi CRM dummy interaktif bawaan. Bagus buat demo cepat, latihan tim, dan eksperimen fitur.
+                    Mulai merekam otomatis di aplikasi CRM dummy interaktif bawaan. Sangat ideal untuk demonstrasi cepat, latihan tim, dan pengujian fitur.
                   </p>
                 </div>
               </div>
@@ -438,9 +438,9 @@ export const SandboxRecorder: React.FC<SandboxRecorderProps> = ({ onSave, onCanc
                   <Upload className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1 group-hover:text-purple-400 transition">Rekam Aplikasi Kantor Lain</h3>
+                  <h3 className="text-lg font-bold text-white mb-1 group-hover:text-purple-400 transition">Perekaman Melalui Video</h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Unggah file rekaman video aplikasi kantor lo sendiri (.mp4/.webm). Scrub timeline videonya, lalu **ambil tangkapan screenshot langkah secara instan!**
+                    Unggah file rekaman video aplikasi kerja Anda (.mp4/.webm). Geser linimasa videonya, lalu tangkap screenshot langkah kerja secara instan.
                   </p>
                 </div>
               </div>
@@ -481,7 +481,7 @@ export const SandboxRecorder: React.FC<SandboxRecorderProps> = ({ onSave, onCanc
                   <Film className="w-4 h-4 text-purple-400" />
                   <span>EXTERNAL VIDEO CAPTURE</span>
                 </h2>
-                <p className="text-xs text-slate-400">Unggah rekaman mp4 lo, geser timeline, lalu klik Capture Frame untuk mencatat langkah!</p>
+                <p className="text-xs text-slate-400">Unggah rekaman video format .mp4/.webm, geser linimasa, lalu klik Capture Frame untuk mencatat langkah panduan.</p>
               </div>
             </div>
 
@@ -601,7 +601,7 @@ export const SandboxRecorder: React.FC<SandboxRecorderProps> = ({ onSave, onCanc
                     >
                       Ganti Video Uploader
                     </button>
-                    <span>💡 Geser slider untuk mencari detik aksi lo, lalu klik <strong>Capture Frame</strong>!</span>
+                    <span>💡 Geser slider untuk mencari detik aksi yang diinginkan, lalu klik <strong>Capture Frame</strong>!</span>
                   </div>
                 </div>
               </div>

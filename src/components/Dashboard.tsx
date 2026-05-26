@@ -10,7 +10,6 @@ import {
   Edit3, 
   Play, 
   Sparkles, 
-  MousePointerClick,
   Layers,
   Clock
 } from 'lucide-react';
@@ -21,10 +20,8 @@ interface DashboardProps {
   onEditGuide: (id: string) => void;
   onPlayGuide: (id: string) => void;
   onDeleteGuide: (id: string) => void;
-  darkMode: boolean;
-  setDarkMode: (val: boolean) => void;
   userRole: 'admin' | 'user';
-  onLogout: () => void;
+  categories: string[];
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -33,17 +30,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onEditGuide,
   onPlayGuide,
   onDeleteGuide,
-  darkMode,
-  setDarkMode,
   userRole,
-  onLogout
+  categories
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedTag, setSelectedTag] = useState<string>('All');
 
   // Derive categories and tags
-  const categories = ['All', ...Array.from(new Set(guides.map(g => g.category)))];
+  const categoriesList = ['All', ...categories];
   const tags = ['All', ...Array.from(new Set(guides.flatMap(g => g.tags)))];
 
   // Filter logic
@@ -63,60 +58,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-4 transition-colors">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-tr from-indigo-600 to-purple-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20 text-white">
-              <MousePointerClick className="w-6 h-6 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-                  By M-Click
-                </h1>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  userRole === 'admin'
-                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/30'
-                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30'
-                }`}>
-                  {userRole === 'admin' ? '🛡️ Admin' : '👥 Team'}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Modena Scribe-like User Guide Builder</p>
-            </div>
+      {/* Top Header Panel */}
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-4.5 transition-colors">
+        <div className="flex justify-between items-center w-full">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              Daftar Panduan Kerja
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Temukan dan pelajari langkah-langkah operasional sistem.</p>
           </div>
           
-          <div className="flex items-center gap-4">
-            {/* Theme Toggle */}
+          {userRole === 'admin' && (
             <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition"
-              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              onClick={onCreateNew}
+              className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/35 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-xs"
             >
-              {darkMode ? '☀️' : '🌙'}
+              <Plus className="w-4 h-4" />
+              <span>Buat Panduan Baru</span>
             </button>
-
-            {/* Create New CTA (Only for Admin) */}
-            {userRole === 'admin' && (
-              <button
-                onClick={onCreateNew}
-                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/35 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-              >
-                <Plus className="w-5 h-5" />
-                <span>Create Guide</span>
-              </button>
-            )}
-
-            {/* Logout Button */}
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-bold px-4 py-2.5 rounded-xl text-xs border border-rose-200/50 dark:border-rose-900/30 transition cursor-pointer"
-              title="Logout from portal"
-            >
-              🚪 <span>Logout</span>
-            </button>
-          </div>
+          )}
         </div>
       </header>
 
@@ -209,7 +169,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
               >
-                {categories.map(cat => (
+                {categoriesList.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -239,7 +199,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <h3 className="text-xl font-bold mb-2">Panduan Tidak Ditemukan</h3>
             <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
-              Coba bersihkan filter pencarian atau buat panduan pertamamu sekarang juga!
+              Coba bersihkan filter pencarian atau buat panduan pertama Anda sekarang juga!
             </p>
             <button 
               onClick={onCreateNew}
